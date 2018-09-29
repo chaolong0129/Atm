@@ -6,6 +6,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 
 import com.google.firebase.database.DataSnapshot;
@@ -18,22 +20,23 @@ public class LoginActivity extends AppCompatActivity {
     private static final String TAG = LoginActivity.class.getSimpleName();
     private EditText edAcct;
     private EditText edPass;
+    private CheckBox cb_save;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
-        // File Write to Android
-        /*getSharedPreferences("atm", MODE_PRIVATE)
-                .edit()
-                .putInt("Level", 3)
-                .putString("NAME", "Robert")
-                .commit();*/
-        // File Read from Android
-        /*int level = getSharedPreferences("atm", MODE_PRIVATE)
-                .getInt("Level", 0);*/
-        /*Log.d(TAG, "onCreate: " + level);*/
         findViews();
+        cb_save.setChecked(getSharedPreferences("atm", MODE_PRIVATE).getBoolean("REMEBER_USERID", false));
+        cb_save.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                getSharedPreferences("atm", MODE_PRIVATE)
+                        .edit()
+                        .putBoolean("REMEBER_USERID", isChecked)
+                        .commit();
+            }
+        });
         String acct = getSharedPreferences("atm", MODE_PRIVATE)
                 .getString("USERID", "");
         if (!acct.isEmpty())
@@ -43,6 +46,7 @@ public class LoginActivity extends AppCompatActivity {
     private void findViews() {
         edAcct = findViewById(R.id.et_acct);
         edPass = findViewById(R.id.et_pass);
+        cb_save = findViewById(R.id.cb_rem_id);
     }
 
     public void login(View view)
@@ -55,10 +59,19 @@ public class LoginActivity extends AppCompatActivity {
                     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                         String pw = (String)dataSnapshot.getValue();
                         if (pw.equals(pass)){
-                            getSharedPreferences("atm", MODE_PRIVATE)
-                                    .edit()
-                                    .putString("USERID", acct)
-                                    .apply();
+                            boolean remeber_me = getSharedPreferences("atm", MODE_PRIVATE)
+                                    .getBoolean("REMEBER_USERID", false);
+                            if (remeber_me) {
+                                getSharedPreferences("atm", MODE_PRIVATE)
+                                        .edit()
+                                        .putString("USERID", acct)
+                                        .apply();
+                            } else {
+                                getSharedPreferences("atm", MODE_PRIVATE)
+                                        .edit()
+                                        .putString("USERID", "")
+                                        .apply();
+                            }
                             setResult(RESULT_OK);
                             finish();
                         } else {
